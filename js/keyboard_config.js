@@ -10,7 +10,6 @@ function initKeyboardConfig(name) {
 		initKeyboardConfigPopover(main, variant);
 		_keyboard_config = loadKeyboardConfig(main, variant);
 		afterLoadKeyboardConfig(main, variant);
-		window.lang.run();
 	}
 	else {
 		$('#kbd-cfg').hide();
@@ -28,7 +27,7 @@ function loadKeyboardConfig(main, variant) {
 		name = main + "-config.json";
 	}
 	$.ajaxSetup({ async: false, cache: false });
-	$.getJSON("keyboard/" + name.toLowerCase(), function(json) {
+	$.getJSON("keyboard/config/" + name.toLowerCase(), function(json) {
 		config = json;
 	}).fail(function(d, textStatus, error) {
 		console.error("getJSON failed, status: " + textStatus + ", error: "+error)
@@ -44,7 +43,9 @@ function initKeyboardConfigPopover(main, variant) {
 		placement: 'bottom',
 		trigger: 'manual',
 		content: function() {
-			return $('#' + main.toLowerCase() + '-config').html();
+			return $('#' + main.toLowerCase() + '-config').contents().filter(function() {
+				return this.nodeType == 8;
+			}).get(0).nodeValue;
 		},
 		container: '#kbd-cfg-container'
 	}).unbind('click').click(function() {
@@ -212,14 +213,12 @@ function kimeraRowColMappingChange(variant) {
 	_keyboard_config["row_mapping"] = row_valid_pins;
 	_keyboard_config["col_mapping"] = col_valid_pins;
 	_keyboard_config["matrix_rows"] = _keyboard_config["row_mapping"].length;
-	console.log(variant);
 	if (variant == "two_headed") {
 		_keyboard_config["matrix_cols"] = parseInt((_keyboard_config["col_mapping"].length + 1) / 2);
 	}
 	else {
 		_keyboard_config["matrix_cols"] = _keyboard_config["col_mapping"].length;
 	}
-	console.log(_keyboard_config["matrix_cols"]);
 	kimeraConfigUpdate(true);
 	kimeraMatrixMappingChange(variant);
 
@@ -335,7 +334,6 @@ function kimeraSetupMatrixMappingPopover() {
 				delay: { show: 500, hide: 100 },
 				container: '#key-info-container',
 			});
-			window.lang.run();
 		});
 	}
 }

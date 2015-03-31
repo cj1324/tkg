@@ -62,7 +62,6 @@ $.fn.led = function() {
 			)
 		);
 		$row.empty().append($binding).append($reverse).append($backlight);
-		window.lang.run();
 		$row.find('.led-binding select').multiselect({
 			buttonTitle: function(options, select) {
 				var $selected = $(options[0]);
@@ -124,14 +123,13 @@ function appendLedParams(id) {
 						$('<div>').attr({ "class": "input-group btn-group" }).append(
 							$('<span>').attr({ "class": "input-group-addon", "lang": "en" }).text("layer")
 						).append(
-							makeSelect({ "id": id + "-param-layer" }, tkg.getFnOptions("layer"), arg)
+							makeSelect({ "id": id + "-param-layer" }, tkg.getFnOptions("layer"), arg, false)
 						)
 					));
 					break;
 			}
 		}
 		$row.find('.led-reverse').before($params);
-		window.lang.run();
 		// layer param
 		$row.find('.led-param-layer select').multiselect({
 			buttonTitle: function(options, select) {
@@ -148,7 +146,6 @@ function appendLedParams(id) {
 }
 
 function onLedParamsChange(id) {
-	window.lang.run();
 	var $row = $('#led-wrapper #' + id);
 	var index = $row.data('index');
 	var binding = $row.data('binding');

@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -6,17 +6,16 @@
 	<title>TMK Keymap Generator</title>
 	<link rel="shortcut icon" href="favicon.ico">
 	<script src="../analytics.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/jquery-1.11.1.min.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/bootstrap.min.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/underscore-min.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/bootstrap3-typeahead.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/bootstrap.touchspin.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/bootstrap-multiselect.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/bootstrap-tagsinput.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/jquery-lang.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/lang/ja.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/lang/zh_sc.js" charset="utf-8" type="text/javascript"></script>
-	<script src="js/lang/zh_tc.js" charset="utf-8" type="text/javascript"></script>
+	<script src="./bower_components/jquery/dist/jquery.min.js" charset="utf-8" type="text/javascript"></script>
+	<script src="./bower_components/bootstrap/dist/js/bootstrap.min.js" charset="utf-8" type="text/javascript"></script>
+	<script src="./bower_components/underscore/underscore-min.js" charset="utf-8" type="text/javascript"></script>
+	<script src="./bower_components/bootstrap3-typeahead/bootstrap3-typeahead.min.js" charset="utf-8" type="text/javascript"></script>
+	<script src="./bower_components/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.min.js" charset="utf-8" type="text/javascript"></script>
+	<script src="./bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js" charset="utf-8" type="text/javascript"></script>
+	<script src="./bower_components/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js" charset="utf-8" type="text/javascript"></script>
+	<script src="./bower_components/jquery-lang-js/js/jquery-lang.js" charset="utf-8" type="text/javascript"></script>
+	<script src="./bower_components/jquery-cookie/jquery.cookie.js" charset="utf-8" type="text/javascript"></script>
+	<script src="./bower_components/chardin.js/chardinjs.min.js" charset="utf-8" type="text/javascript"></script>
 	<script src="js/keycode_map.js" charset="utf-8" type="text/javascript"></script>
 	<script src="js/fn_map.js" charset="utf-8" type="text/javascript"></script>
 	<script src="js/led_map.js" charset="utf-8" type="text/javascript"></script>
@@ -25,10 +24,17 @@
 	<script src="js/fn.js" charset="utf-8" type="text/javascript"></script>
 	<script src="js/led.js" charset="utf-8" type="text/javascript"></script>
 	<script src="js/keyboard_config.js" charset="utf-8" type="text/javascript"></script>
+	<script src="js/burn.js" charset="utf-8" type="text/javascript"></script>
+	<script src="js/bootloader_printer.js" charset="utf-8" type="text/javascript"></script>
+	<script src="js/bootloader_dfu.js" charset="utf-8" type="text/javascript"></script>
+	<script src="js/tour.js" charset="utf-8" type="text/javascript"></script>
 	<script src="js/main.js" charset="utf-8" type="text/javascript"></script>
-	<link rel="stylesheet" href="css/bootstrap.min.css">
-	<link rel="stylesheet" href="css/bootstrap-multiselect.css">
-	<link rel="stylesheet" href="css/bootstrap-tagsinput.css">
+	<link rel="stylesheet" href="./bower_components/bootstrap/dist/css/bootstrap.min.css">
+	<link rel="stylesheet" href="./bower_components/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.min.css">
+	<link rel="stylesheet" href="./bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css">
+	<link rel="stylesheet" href="./bower_components/bootstrap-tagsinput/dist/bootstrap-tagsinput.css">
+	<link rel="stylesheet" href="./bower_components/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="./bower_components/chardin.js/chardinjs.css">
 	<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -42,7 +48,7 @@
 						<span class="icon-bar"></span>
 						<span class="icon-bar"></span>
 					</button>
-					<a class="navbar-brand" href="#">TMK Keymap Generator <sup>BETA</sup></a>
+					<a class="navbar-brand" id="logo" href="#">TMK Keymap Generator <sup>BETA</sup></a>
 				</div>
 				<div class="collapse navbar-collapse">
 					<ul class="nav navbar-nav">
@@ -61,11 +67,19 @@
 							<a href="javascript:void(0)" id="tools" role="button" class="dropdown-toggle" data-toggle="dropdown"><span lang="en">Tools</span> <b class="caret"></b>
 							</a>
 							<ul class="dropdown-menu" role="menu" aria-labelledby="tools">
+								<li role="presentation">
+									<a id="tools-show-tour" role="menuitem" tabindex="-1" href="javascript:void(0)"><i class="glyphicon glyphicon-info-sign"></i> <span lang="en">Show Tour</span></a>
+								</li>
+								<li class="divider" role="presentation"></li>
 								<li class="disabled" role="presentation">
-									<a id="tools-import-fn" role="menuitem" tabindex="-1" href="javascript:void(0)" lang="en">Import Fn</a>
+									<a id="tools-import-fn" role="menuitem" tabindex="-1" href="javascript:void(0)"><i class="glyphicon glyphicon-import"></i> <span lang="en">Import Fn</span></a>
 								</li>
 								<li class="disabled" role="presentation">
-									<a id="tools-export-fn" role="menuitem" tabindex="-1" href="javascript:void(0)" lang="en">Export Fn</a>
+									<a id="tools-export-fn" role="menuitem" tabindex="-1" href="javascript:void(0)"><i class="glyphicon glyphicon-export"></i> <span lang="en">Export Fn</span></a>
+								</li>
+								<li class="divider" role="presentation"></li>
+								<li role="presentation">
+									<a id="tools-advanced-mode" role="menuitem" tabindex="-1" href="javascript:void(0)"><i class="glyphicon glyphicon-ok" style="visibility:hidden;"></i> <span lang="en">Advanced Mode</span></a>
 								</li>
 							</ul>
 						</li>
@@ -98,7 +112,7 @@
 					<div id="general-field" class="collapse in">
 						<div class="form-group">
 							<label for="keyboard-sel" lang="en" class="col-md-2 control-label">Keyboard</label>
-							<div class="col-md-5">
+							<div class="col-md-6">
 								<div class="btn-group input-group">
 									<select id="keyboard-sel" class="form-control">
 										<option>GH60 (RevA/B/C)</option>
@@ -131,7 +145,7 @@
 					<div id="layer-field" class="collapse in">
 						<div id="layer-mode" class="form-group">
 							<label for="layer-mode-normal" lang="en" class="col-md-2 control-label">Layer Mode</label>
-							<div class="col-md-3">
+							<div class="col-md-5">
 								<div class="btn-group">
 									<button id="layer-mode-normal" class="btn btn-primary active" lang="en">Normal</button>
 									<button id="layer-mode-simple" class="btn btn-default" lang="en">Simple</button>
@@ -144,7 +158,7 @@
 					</div>
 				</fieldset>
 				<fieldset style="display: none;">
-					<legend data-toggle="collapse" data-target="#fn-field"><span lang="en">Fn</span><div class="pull-right"><span class="glyphicon glyphicon-chevron-up"></span></div></legend>
+					<legend id="fn-legend" data-toggle="collapse" data-target="#fn-field"><span lang="en">Fn</span><div class="pull-right"><span class="glyphicon glyphicon-chevron-up"></span></div></legend>
 					<div id="fn-field" class="collapse in">
 						<div id="fn-wrapper">
 						</div>
@@ -159,9 +173,9 @@
 				</fieldset>
 				<hr>
 				<div class="form-group">
-					<div class="col-md-offset-2 col-md-5">
-						<button id="dl_eep" type="button" class="dl-btn btn btn-default"><span class="glyphicon glyphicon-floppy-disk"></span> <span lang="en">Download</span> .eep <span lang="en">file</span></button>
-						<button id="dl_c" type="button" class="dl-btn btn btn-default"><span class="glyphicon glyphicon-floppy-disk"></span> <span lang="en">Download</span> .c <span lang="en">file</span></button>
+					<div id="btns" class="col-md-offset-2 col-md-6">
+						<button id="dl_eep" type="button" class="dl-btn dl-btn-restrict btn btn-default"><span class="glyphicon glyphicon-floppy-disk"></span> <span lang="en">Download .eep file</span></button>
+						<button id="dl_c" type="button" class="dl-btn dl-btn-restrict btn btn-default"><span class="glyphicon glyphicon-floppy-disk"></span> <span lang="en">Download .c file</span></button>
 					</div>
 				</div>
 			</form>
@@ -172,38 +186,9 @@
 			<div id="key-info-container"></div>
 			<!-- popover: kimera config -->
 			<div id="kimera-config" style="display: none;">
+				<!--
 				<div id="kimera-config-inner">
 					<form class="form-horizontal" role="form">
-						<!--
-						<div class="form-group">
-							<label for="kimera-mux-sel[1]"><abbr title="Assign port for Row or Col use" lang="en">Port Mapping</abbr></label>
-							<div>
-								<div id="kimera-mux" class="btn-group">
-									<select id="kimera-mux-sel[1]" class="form-control">
-										<option disabled="disabled">P1-P8</option>
-										<option lang="en" value="row">Row</option>
-										<option lang="en" value="col">Col</option>
-									</select>
-									<select id="kimera-mux-sel[2]" class="form-control">
-										<option disabled="disabled">P9-P16</option>
-										<option lang="en" value="row">Row</option>
-										<option lang="en" value="col">Col</option>
-									</select>
-									<select id="kimera-mux-sel[3]" class="form-control">
-										<option disabled="disabled">P17-P24</option>
-										<option lang="en" value="row">Row</option>
-										<option lang="en" value="col">Col</option>
-									</select>
-									<select id="kimera-mux-sel[4]" class="form-control">
-										<option disabled="disabled">P25-P32</option>
-										<option lang="en" value="row">Row</option>
-										<option lang="en" value="col">Col</option>
-									</select>
-								</div>
-								<div id="kimera-mux-error" class="alert alert-danger" lang="en" style="display: none;">Please select at least one Row or Col.</div>
-							</div>
-						</div>
-						-->
 						<div id="kimera-error" class="alert alert-danger" lang="en" style="display: none;">Please set at least one valid Row or Col.</div>
 						<div id="kimera-row" class="form-group">
 							<label for="kimera-row-val"><abbr title="Input port numbers orderly. Use commas to separate numbers and backspace to delete numbers. Invalid values are shown in red." lang="en">Row Mapping</abbr></label>
@@ -235,6 +220,7 @@
 						</div>
 					</form>
 				</div>
+				-->
 			</div>
 		</div>
 		<div id="pg-about" class="page container" style="display:none;">

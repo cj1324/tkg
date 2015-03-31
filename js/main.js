@@ -1,23 +1,38 @@
-window.lang = new jquery_lang_js();
+window.lang = new Lang('en', undefined, undefined, {
+	"ja": "js/lang/ja.json",
+	"zh_sc": "js/lang/zh_sc.json",
+	"zh_tc": "js/lang/zh_tc.json"
+});
 var tkg = new TKG();
 var _keyboard = {};
 var _layer_mode = LAYER_NORMAL;
+var _advanced_mode = false;
 
 $(function() {
+
+	changeFont();
+
+	Lang.prototype.attrList.push('label');
+	$(window.lang).on('afterUpdate', function(e, currentLang, lang) {
+		afterLangChange(lang);
+	});
 
 	$(window).on('hashchange', function() {
 		switchPage(location.hash.slice(1));
 	}).trigger('hashchange');
 
-	window.lang.beforeRun = function() {
-		detachLinks();
-	}
-	window.lang.afterChange = function(lang) {
-		attachLinks();
-		changeFont(lang);
+	$('.btn').button();
+
+	if ($.cookie && $.cookie('tkg_advancedMode')) {
+		_advanced_mode = JSON.parse($.cookie('tkg_advancedMode'));
 	}
 
-	$('.btn').button();
+	if ($.cookie && $.cookie('tkg_keyboardName')) {
+		$('#keyboard-sel').val($.cookie('tkg_keyboardName')).multiselect('refresh');
+	}
+	else {
+		$('#keyboard-sel').multiselect('refresh');
+	}
 
 	showNotification();
 
@@ -32,10 +47,21 @@ $(function() {
 	});
 	$('#keyboard-sel').change(function() {
 		var name = this.value;
+		if ($.cookie) {
+			$.cookie('tkg_keyboardName', name, {
+				expires: 365,
+				path: '/'
+			});
+		}
 		initialize(name, _layer_mode);
-	}).change();
+	});
 
-	updateDownloadButtonState();
+	$(window).load(function() {
+		$('#keyboard-sel').change();
+		if (_tour_once) {
+			showTour();
+		}
+	});
 
 	// on navbar click
 	$('.navbar-brand').click(function(e) {
@@ -54,6 +80,11 @@ $(function() {
 		$(this).parent().find('legend span.glyphicon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
 	});
 
+	// show tour
+	$('#tools-show-tour').click(function(e) {
+		setTimeout(showTour, 100);
+	});
+
 	// import fn dialog
 	$('#tools-import-fn').click(function(e) {
 		if ($(this).parent().hasClass('disabled')) {
@@ -67,7 +98,6 @@ $(function() {
 		$('#import-fn-button').addClass('disabled');
 		$('#import-fn-error').addClass('hide');
 		$('#import-fn-val').parent().removeClass('has-error');
-		window.lang.run();
 	}).on('shown.bs.modal', function() {
 		$('#import-fn-val').focus();
 	});
@@ -81,7 +111,6 @@ $(function() {
 		$('#export-fn-dialog').modal('show');
 	});
 	$('#export-fn-dialog').on('show.bs.modal', function() {
-		window.lang.run();
 		$('#export-fn-val').val(tkg.exportFns());
 	}).on('shown.bs.modal', function() {
 		$('#export-fn-val').focus().select();
@@ -117,9 +146,22 @@ $(function() {
 		else {
 			$('#import-fn-error').removeClass('hide');
 			$('#import-fn-val').focus().parent().addClass('has-error');
-			window.lang.run();
 		}
 	});
+
+	// advanced mode
+	$('#tools-advanced-mode').click(function() {
+		_advanced_mode = !_advanced_mode;
+		if ($.cookie) {
+			$.cookie('tkg_advancedMode', _advanced_mode, {
+				expires: 365,
+				path: '/'
+			});
+		}
+		updateAdvancedModeState();
+		updateBurnButtonState();
+	});
+	updateAdvancedModeState();
 
 	// get raw data from server
 	$('body').on('blur', '.kle-layer', function(event) {
@@ -259,6 +301,8 @@ function initialize(keyboard_name, layer_mode) {
 	initKeyboardInfo(keyboard);
 	initForm(layer_mode);
 	appendLeds();
+	updateDownloadButtonState();
+	updateBurnButtonState();
 }
 
 function loadKeyboard(keyboard_name) {
@@ -267,10 +311,10 @@ function loadKeyboard(keyboard_name) {
 	var main = result["main"];
 	var variant = result["variant"];
 	$.ajaxSetup({ async: false, cache: false });
-	$.getJSON("keyboard/" + main + ".json", function(json) {
+	$.getJSON("keyboard/config/" + main + ".json", function(json) {
 		keyboard = json;
 		if (variant) {
-			$.getJSON("keyboard/" + main + "-" + variant + ".json", function(json) {
+			$.getJSON("keyboard/config/" + main + "-" + variant + ".json", function(json) {
 				keyboard = _.extend(keyboard, json);
 			}).fail(function(d, textStatus, error) {
 				console.error("getJSON failed, status: " + textStatus + ", error: "+error)
@@ -325,12 +369,6 @@ function initKeyboardInfo(keyboard) {
 			'<strong><span lang="en">Max Layers</span>: </strong>' + keyboard['max_layers'] + '<br/>' +
 			'<strong><span lang="en">Max Fns</span>: </strong>' + keyboard['max_fns']
 	});
-
-	// translate when shown
-	$('#kbd-info').on('shown.bs.popover', function() {
-		//$('#kbd-info-container .popover').css('top', $(this).offset().top + 'px');
-		window.lang.run();
-	});
 }
 
 function initForm(layer_mode) {
@@ -339,18 +377,14 @@ function initForm(layer_mode) {
 	appendLayers(layer_mode);
 
 	// clear fns
-	emptyFns();
+	clearFns();
 
 	// update buttons
 	updateDownloadButtonState();
-
-	// translate
-	window.lang.run();
 }
 
 function appendNotification() {
 	$('.navbar-fixed-top').prepend('<div id="notification"><div id="notification-inner" lang="en">This website is under construction, any feature will be removed or be modified at any time without advance notice.</div></div>');
-	window.lang.run();
 }
 
 function showNotification() {
@@ -360,18 +394,27 @@ function showNotification() {
 }
 
 function onLangChange(lang) {
-	window.lang.change(lang);
+	detachLinks();
+	console.groupCollapsed("lang");
+	window.lang.change(lang, undefined, function() {
+		console.groupEnd("lang");
+	});
+}
+
+function afterLangChange(lang) {
+	attachLinks();
+	changeFont(lang);
 	rebuildFnSelect();
 	rebuildLedSelect();
 }
 
 function changeFont(lang) {
-	var font = '"Helvetica Neue",Helvetica,"Segoe UI",Arial';
+	var font = '"Helvetica Neue","Segoe UI",Helvetica,Arial';
 	switch (lang) {
 		case 'en':
 			break;
 		case 'ja':
-			font += ',"MS UIGothic"';
+			font += ',"Hiragino Kaku Gothic",Meiryo,"MS UIGothic"';
 			break;
 		case 'zh_sc':
 			font += ',"Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei"';
@@ -404,6 +447,7 @@ function updateDownloadButtonState() {
 			}
 		}
 	});
+
 	var $dl_btn = $('.dl-btn');
 	$dl_btn.removeClass('btn-default btn-success btn-warning btn-danger');
 	if (has_error) {
@@ -420,10 +464,20 @@ function updateDownloadButtonState() {
 	}
 	var enabled = !has_error && (empty_count < $('.layer').length);
 	if (enabled) {
-		$('.dl-btn').removeClass('disabled');
+		$('.dl-btn-restrict').removeClass('disabled');
 	}
 	else {
-		$('.dl-btn').addClass('disabled');
+		$('.dl-btn-restrict').addClass('disabled');
+	}
+}
+
+function updateBurnButtonState() {
+	if ((_keyboard['bootloader'] && _keyboard['bootloader'].length) &&
+	(_keyboard['name'].match(/^RedScarfIII/i) || _advanced_mode)) {
+		appendBurnButton(_keyboard['bootloader'], _keyboard['firmware']);
+	}
+	else {
+		removeBurnButton();
 	}
 }
 
@@ -433,6 +487,15 @@ function updateToolsMenuState() {
 	}
 	else {
 		$('#tools-import-fn, #tools-export-fn').parent().addClass('disabled');
+	}
+}
+
+function updateAdvancedModeState() {
+	if (_advanced_mode) {
+		$('#tools-advanced-mode').parent().find('i').css('visibility', 'visible');
+	}
+	else {
+		$('#tools-advanced-mode').parent().find('i').css('visibility', 'hidden');
 	}
 }
 
@@ -619,14 +682,37 @@ function getKLERawData(url, success, fail) {
 }
 
 function parseKeyboardName(name) {
-	var rsc = /[\s\/-]/g;
 	var result = name.match(/^(.*)\((.*)\)$/);
 	if (result) {
-		var main = result[1].trim().replace(rsc, '_').toLowerCase();
-		var variant = result[2].trim().replace(rsc, '_').toLowerCase();
+		var main = normalizeString(result[1]);
+		var variant = normalizeString(result[2]);
 	}
 	else {
-		var main = name.trim().replace(rsc, '_').toLowerCase();
+		var main = normalizeString(name);
 	}
 	return { "main": main, "variant": variant };
+}
+
+function normalizeString(str) {
+	var rsc = /[\s\/-]/g;
+	return str.trim().replace(rsc, '_').toLowerCase();
+}
+
+versionCompare = function(left, right) {
+	if (typeof left + typeof right != 'stringstring')
+		return false;
+
+	var a = left.split('.')
+		,   b = right.split('.')
+		,   i = 0, len = Math.max(a.length, b.length);
+
+	for (; i < len; i++) {
+		if ((a[i] && !b[i] && parseInt(a[i]) > 0) || (parseInt(a[i]) > parseInt(b[i]))) {
+			return 1;
+		} else if ((b[i] && !a[i] && parseInt(b[i]) > 0) || (parseInt(a[i]) < parseInt(b[i]))) {
+			return -1;
+		}
+	}
+
+	return 0;
 }

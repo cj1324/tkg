@@ -1,3 +1,10 @@
+var _fn_clipboard = {};
+
+function clearFns() {
+	_fn_clipboard = {};
+	emptyFns();
+}
+
 function emptyFns() {
 	$('#fn-wrapper').empty();
 	$('#fn-field').parent().hide();
@@ -58,7 +65,6 @@ $.fn.fn = function() {
 			makeSelect({ "id": id + "-action", "class": "multiselect" }, action_options, action)
 		);
 		$row.empty().append($action);
-		window.lang.run();
 		$row.find('.fn-action select').multiselect({
 			buttonText: function(options, select) {
 				var $selected = $(options[0]);
@@ -77,6 +83,33 @@ $.fn.fn = function() {
 			},
 		});
 		onFnActionChange(id);
+		$row.append(
+			$('<div>').attr({ "class": "fn-btn" }).hide().append(
+				$('<a>').attr({
+					"href": "javascript:void(0)",
+					"class": "fn-copy btn btn-xs btn-default"
+				}).append(
+					$('<span>').attr({ "class": "glyphicon glyphicon-duplicate" })
+				),
+				$('<a>').attr({
+					"href": "javascript:void(0)",
+					"class": "fn-paste btn btn-xs btn-default"
+				}).append(
+					$('<span>').attr({ "class": "glyphicon glyphicon-paste" })
+				)
+			)
+		);
+		$row.parent().on('mouseover', function() {
+			$(this).find('.fn-btn').show();
+		}).on('mouseout', function() {
+			$(this).find('.fn-btn').hide();
+		});
+		$row.on('click', '.fn-copy', function() {
+			_fn_clipboard = tkg.getFns($row.data('index'));
+		}).on('click', '.fn-paste', function() {
+			tkg.setFns($row.data('index'), _fn_clipboard);
+			$row.fn();
+		});
 	});
 }
 
@@ -96,7 +129,7 @@ function onFnActionChange(id) {
 function appendFnParams(id) {
 	var $row = $('#fn-wrapper #' + id);
 	var $action = $row.find('.fn-action');
-	$action.nextAll().remove();
+	$action.nextAll('.fn-param').remove();
 	var index = $row.data('index');
 	var fn = tkg.getFns(index);
 	var action = fn["action"];
@@ -114,7 +147,7 @@ function appendFnParams(id) {
 						$('<div>').attr({ "class": "input-group btn-group" }).append(
 							$('<span>').attr({ "class": "input-group-addon", "lang": "en" }).text("layer")
 						).append(
-							makeSelect({ "id": id + "-param-layer" }, tkg.getFnOptions("layer"), arg)
+							makeSelect({ "id": id + "-param-layer" }, tkg.getFnOptions("layer"), arg, false)
 						)
 					));
 					break;
@@ -140,6 +173,7 @@ function appendFnParams(id) {
 							makeSelect({ "id": id + "-param-mods", "class": "btn", "multiple": "multiple" },
 								tkg.getFnOptions("mod"),
 								arg,
+								true,
 								function(value, current) { return _.indexOf(current, value) != -1; }
 							)
 						)
@@ -158,7 +192,7 @@ function appendFnParams(id) {
 					var options = tkg.getFnOptions("af_id");
 					if (options.length) {
 						$params = $params.add($('<div>').attr({ "class": "fn-param fn-param-af-id" }).append(
-							$('<div>').attr({ "class": "input-group btn-group" }).append(
+							$('<div>').attr({ "class": "input-group" }).append(
 								makeSelect({ "id": id + "-param-af-id" }, options, arg)
 							)
 						));
@@ -168,7 +202,7 @@ function appendFnParams(id) {
 					var options = tkg.getFnOptions("am_id");
 					if (options.length) {
 						$params = $params.add($('<div>').attr({ "class": "fn-param fn-param-am-id" }).append(
-							$('<div>').attr({ "class": "input-group btn-group" }).append(
+							$('<div>').attr({ "class": "input-group" }).append(
 								makeSelect({ "id": id + "-param-am-id" }, options, arg)
 							)
 						));
@@ -176,8 +210,7 @@ function appendFnParams(id) {
 					break;
 			}
 		}
-		$row.append($params);
-		window.lang.run();
+		$action.after($params);
 		// layer param
 		$row.find('.fn-param-layer select').multiselect({
 			buttonTitle: function(options, select) {
@@ -298,8 +331,8 @@ function appendFnSubParams(id) {
 			var options = tkg.getFnOptions("af_opt")[af_id];
 			$row.find('.fn-param-af-opt').remove();
 			if (options.length) {
-				$row = $row.append($('<div>').attr({ "class": "fn-param fn-param-af-opt" }).append(
-					$('<div>').attr({ "class": "input-group btn-group" }).append(
+				$row.find('.fn-param').last().after($('<div>').attr({ "class": "fn-param fn-param-af-opt" }).append(
+					$('<div>').attr({ "class": "input-group" }).append(
 						makeSelect({ "id": id + "-param-af-opt" }, options, af_opt)
 					)
 				));
@@ -321,7 +354,6 @@ function appendFnSubParams(id) {
 }
 
 function onFnParamsChange(id) {
-	window.lang.run();
 	var $row = $('#fn-wrapper #' + id);
 	var index = $row.data('index');
 	var action = $row.data('action');
@@ -337,7 +369,10 @@ function onFnParamsChange(id) {
 	});
 }
 
-function makeSelect(attr, data, current, selected) {
+function makeSelect(attr, data, current, lang, selected) {
+	if (arguments.length < 4) {
+		lang = true;
+	}
 	return $('<select>').attr(attr).append(
 		(function() {
 			function makeOption(data, current, selected) {
@@ -365,14 +400,14 @@ function makeSelect(attr, data, current, selected) {
 				return $('<option>').attr({
 					"value": value,
 					"title": title,
-					"lang": "en",
+					"lang": lang ? "en" : undefined,
 					"selected": selected.call(selected, value, current)
 				}).prop('disabled', disabled).text(text);
 			}
 			var $options = $();
 			for (var index in data) {
 				if (_.isArray(data[index])) {
-					var $optgroup = $('<optgroup>', { "label": index, "lang": "en" });
+					var $optgroup = $('<optgroup>', { "label": index, "lang": lang ? "en" : undefined });
 					var $sub_options = $();
 					for (var i = 0; i < data[index].length; i++) {
 						$sub_options = $sub_options.add(makeOption(data[index][i], current, selected));

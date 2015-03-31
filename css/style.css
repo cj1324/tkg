@@ -91,9 +91,11 @@ body {
 	text-align: center;
 	font-size: 0.8em;
 }
-#dl_c,
-#dl_eep {
+.dl-btn {
 	margin-bottom: 15px;
+}
+.dl-btn ~ ul {
+	margin-top: -13px;
 }
 .fn-row {
 	float: left;
@@ -106,6 +108,19 @@ body {
 	display: table-cell;
 	vertical-align: top;
 	padding: 0 15px 0 0;
+}
+.fn-btn {
+	display: table-cell;
+	vertical-align: middle;
+	padding: 0 15px 0 0;
+}
+.fn-btn .btn {
+	color: #9d9d9d;
+	border-color: transparent;
+	background: inherit;
+}
+.fn-btn .btn:hover {
+	color: #333;
 }
 .led-row {
 	float: left;
@@ -136,10 +151,6 @@ body {
 
 .multiselect-group {
 	text-decoration: underline;
-}
-
-.btn.multiselect-clear-filter {
-	padding: 9px 3px;
 }
 
 .bootstrap-tagsinput {
@@ -261,4 +272,45 @@ span.glyphicon-chevron-down,
 span.glyphicon-chevron-up {
 	font-size: 0.5em;
 	line-height: 3.5;
+}
+
+#burn_icon {
+	width: 14px;
+}
+
+.fa.spin,
+.glyphicon.spin {
+	animation-name: spin;
+	animation-duration: .5s;
+	animation-iteration-count: infinite;
+	animation-timing-function: linear;
+	-webkit-animation-name: spin;
+	-webkit-animation-duration: .5s;
+	-webkit-animation-iteration-count: infinite;
+	-webkit-animation-timing-function: linear;
+	-webkit-filter: blur(0);
+}
+@-moz-keyframes spin
+{
+    from { -moz-transform: rotate(0deg); transform: rotate(0deg); }
+    to { -moz-transform: rotate(360deg); transform: rotate(360deg); }
+}
+@-webkit-keyframes spin
+{
+    from { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+}
+@keyframes spin
+{
+    from { -wekbit-transform: rotate(0deg); -moz-transform: rotate(0deg); transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); -moz-transform: rotate(360deg); transform: rotate(360deg); }
+}
+
+.fa-spin {
+	-webkit-filter: blur(0);
+}
+
+.chardinjs-helper-layer {
+	z-index: 9999999;
+	box-sizing: content-box;
 }
