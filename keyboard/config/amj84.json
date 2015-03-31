@@ -138,8 +138,11 @@
 		"description": "Keypad 00",
 		"opt": []
 	}],
-	"action_functions": [],
 	"led_additional_index": 0,
+	"bootloader": [{
+		"name": "DFU",
+		"mcu": "atmega32u4"
+	}],
 	"additional": [{
 		"start": 8,
 		"size": 6,
